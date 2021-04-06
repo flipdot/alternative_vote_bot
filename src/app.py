@@ -2,6 +2,7 @@ import json
 import locale
 import logging
 import sys
+import re
 from pathlib import Path
 
 from pydiscourse.exceptions import DiscourseClientError
@@ -25,10 +26,21 @@ def send_ballot(client, username):
     return res.get('topic_id')
 
 
-def get_vote(client, topic_id):
+def get_vote(client: DiscourseClient, topic_id) -> list:
     posts = client.topic_posts(topic_id)["post_stream"]["posts"]
+    vote_list = None
+    p = re.compile(r'@[A-Za-z0-9-_]+')
     for post in posts:
         print(post["cooked"])
+        if post["username"] == client.api_username:
+            continue
+        vote_list = p.findall(post["cooked"])
+    if not vote_list:
+        print(f"no answer from {topic_id}")
+        return []
+    vote_list = list(map(lambda name: name.lower(), vote_list))
+    print(f"vote list: {vote_list}")
+    return vote_list
 
 
 def initiate_election(client: DiscourseClient, users=None):
@@ -40,7 +52,7 @@ def initiate_election(client: DiscourseClient, users=None):
     for user in users:
         if not user["active"] or "suspended_at" in user:
             continue
-        if user["username"] not in ["soerface", "anselm"]:
+        if user["username"] not in ["anselm"]:
             continue
         topics.append(send_ballot(client, user["username"]))
 
@@ -64,5 +76,5 @@ if __name__ == "__main__":
             users = json.load(f)
     else:
         users = None
-    initiate_election(client, users=users)
+    #initiate_election(client, users=users)
     get_election_results(client)

@@ -26,12 +26,17 @@ def send_ballot(client, username):
     return res.get('topic_id')
 
 
+def distinct(seq) -> list:
+    # see https://stackoverflow.com/a/4463433
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
+
+
 def get_vote(client: DiscourseClient, topic_id) -> list:
     posts = client.topic_posts(topic_id)["post_stream"]["posts"]
     vote_list = None
     p = re.compile(r'@[A-Za-z0-9-_]+')
     for post in posts:
-        print(post["cooked"])
         if post["username"] == client.api_username:
             continue
         vote_list = p.findall(post["cooked"])
@@ -39,8 +44,8 @@ def get_vote(client: DiscourseClient, topic_id) -> list:
         print(f"no answer from {topic_id}")
         return []
     vote_list = list(map(lambda name: name.lower(), vote_list))
-    print(f"vote list: {vote_list}")
-    return vote_list
+    print(f"vote list: {distinct(vote_list)}")
+    return distinct(vote_list)
 
 
 def initiate_election(client: DiscourseClient, users=None):
@@ -60,6 +65,34 @@ def initiate_election(client: DiscourseClient, users=None):
         json.dump(topics, f)
 
 
+def remind_users(client: DiscourseClient, message: str):
+    with open("topics.json") as f:
+        topics = json.load(f)
+    for topic_id in topics:
+        if len(get_vote(client, topic_id)) > 0:
+            continue
+        client.create_post(message, topic_id = topic_id)
+
+
+def answer_with_recieved_lists(client: DiscourseClient):
+    # answers if the last message is from user with the list recieved
+    with open("topics.json") as f:
+        topics = json.load(f)
+    for topic_id in topics:
+        posts = client.topic_posts(topic_id)["post_stream"]["posts"]
+        last_post = posts[-1]
+        if last_post["username"] == client.api_username:
+            continue
+        vote_list = get_vote(client, topic_id)
+        client.create_post(f"Hi!\nDu hast für die folgende Liste von Membern abgestimmt.\n"
+                           f"Überprüfe bitte, ob alle Personen, für die du abstimmen möchtest, enthalten sind.\n"
+                           # f"Um die Liste zu ändern, schicke einfach eine neue Nachricht mit deiner neuen Wahl.\n"
+                           f"\n-----\n\n" +
+                           # vote_list,
+                           ("\n".join(vote_list)),
+                           topic_id=topic_id)
+
+
 def get_election_results(client: DiscourseClient):
     with open("topics.json") as f:
         topics = json.load(f)
@@ -77,4 +110,6 @@ if __name__ == "__main__":
     else:
         users = None
     #initiate_election(client, users=users)
+    remind_users(client, "Hey, voten! jetzt!! ;)")
+    answer_with_recieved_lists(client)
     get_election_results(client)

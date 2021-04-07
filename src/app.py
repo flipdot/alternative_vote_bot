@@ -4,7 +4,6 @@ import logging
 import random
 import sys
 import re
-from itertools import count
 from pathlib import Path
 from typing import List, Set
 
@@ -58,9 +57,9 @@ def get_vote(client: DiscourseClient, topic_id) -> list:
     vote_list = None
     p = re.compile(r'@[A-Za-zäöüÄÖÜß0-9-_]+')
     for post in posts:
-        if post["username"] == client.api_username:
+        if post["yours"]:
             continue
-        #print(post["cooked"])
+        # print(post["cooked"])
         vote_list_this_post = p.findall(post["cooked"])
         # skip if we already got a list and this post is empty
         if len(vote_list_this_post) == 0 and vote_list:
@@ -100,8 +99,8 @@ def remind_users(client: DiscourseClient, message: str):
         client.create_post(message, topic_id=topic_id)
 
 
-def answer_with_recieved_lists(client: DiscourseClient, update: bool = False):
-    # answers if the last message is from user with the list recieved
+def answer_with_received_lists(client: DiscourseClient, update: bool = False):
+    # answers with the list received if the last message is from user or their message was updated
     with open("topics.json") as f:
         topics = json.load(f)
     legal_usernames = get_legal_usernames()
@@ -124,18 +123,20 @@ def answer_with_recieved_lists(client: DiscourseClient, update: bool = False):
                    # vote_list,
                    "\n".join(legal_vote_list))
         if len(legal_vote_list) == 0:
-            message = "Du hast keinen mir bekannten Namen eingegeben :(\nDenke daran, @name zu schreiben und nur für existierende Member abzustimmen ;)"
+            message = "Du hast keinen mir bekannten Namen eingegeben :(\n" \
+                      "Denke daran, @name zu schreiben und nur für existierende Member abzustimmen ;)"
         if len(legal_vote_list) < len(vote_list):
-            message = "Für die folgenden Personen konnte nicht abgestimmt werden. Bitte Überprüfe deine Eingabe. Solltest du nichts ändern, werden diese Einträge ignoriert.\n" + \
+            message = "Für die folgenden Personen konnte nicht abgestimmt werden. Bitte überprüfe deine Eingabe." \
+                      " Solltest du nichts ändern, werden diese Einträge ignoriert.\n" + \
                       ("\n".join([name for name in vote_list if name not in legal_vote_list])) + \
                       "\n\n-----\n\n" + \
                       message
         if last_post["yours"]:
-            print(last_post.keys())
-            print(f"updating {last_post['id']} from \n\"{last_post['cooked']}\"\n to \n\"{message}\"")
+            print(f"updating {last_post['id']} from\n    " + last_post['cooked'].replace('\n', '\n    ') +
+                  "\nto\n    " + message.replace('\n', '\n    '))
             client.update_post(last_post["id"], message)
         else:
-            print(f"sending message:\n{message}")
+            print(f"sending message:\n    " + message.replace('\n', '\n    '))
             client.create_post(message, topic_id=topic_id)
 
 
@@ -175,7 +176,7 @@ if __name__ == "__main__":
     else:
         users = None
     # initiate_election(client, users=users)
-    answer_with_recieved_lists(client, update=True)
-    # remind_users(client, "Hier könnte eine Erinnerung stehen.\nDieser Test geht übrigens nur an @soefface und @excellencegroup") # "Hey, voten! jetzt!! ;)")
+    answer_with_received_lists(client, update=True)
+    # remind_users(client, "Eine Erinnerung... voten! jetzt!! ;)")
     count_election_results(client)
     print_election_results(client)

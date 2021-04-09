@@ -177,8 +177,15 @@ if __name__ == "__main__":
     else:
         logging.error(f"Could not find file: {users_json}")
         sys.exit(-2)
-    # initiate_election(client, users=users)
-    answer_with_received_lists(client, update=True)
-    # remind_users(client, "Eine Erinnerung... voten! jetzt!! ;)")
+    if "--initiate-election" in sys.argv:
+        initiate_election(client, users=users)
+    if "--no-answer" not in sys.argv:
+        answer_with_received_lists(client, update=True)
+    if "--remind-users" in sys.argv:
+        idx = sys.argv.index("--remind-users")
+        message = sys.argv[idx + 1]
+        assert "Erinnerung" in message, "message should contain the keyword `Erinnerung`!"
+        remind_users(client, message)
     count_election_results(client)
-    print_election_results(client)
+    if "--print-election-results" in sys.argv:
+        print_election_results(client)

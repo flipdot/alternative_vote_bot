@@ -4,11 +4,9 @@ DISCOURSE_HOST = os.getenv('DISCOURSE_HOST', '').rstrip('/') or 'https://forum.f
 
 DISCOURSE_CREDENTIALS = {
     'api_key': os.getenv('DISCOURSE_API_KEY'),
-    'api_username': os.getenv('DISCOURSE_USERNAME') or 'flipbot',
+    'api_username': os.getenv('DISCOURSE_USERNAME') or 'alternative_vote_bot',
     'host': DISCOURSE_HOST,
 }
-
-DEBUG = 'test' in DISCOURSE_CREDENTIALS['api_username']
 
 assert DISCOURSE_CREDENTIALS[
     'api_key'

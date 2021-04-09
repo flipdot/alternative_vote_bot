@@ -40,8 +40,12 @@ def check_login(client: DiscourseClient) -> None:
 
 def send_ballot(client, username):
     res = client.create_post(
-        "Heyho...\n hier mal ein kleiner Test. bitte eine Liste aus irgendwelchen usernamen (mit @) zurückschreiben. Und gerne kaputtspielen ;) (muss aber noch manuell ausführen, nicht wundern, wenn erstmal nix passiert)",
-        title="1 kleine Testabstimmung", archetype="private_message",
+        "Moin,\n"
+        "das hier ist die PN, in der du von deinem Stimmrecht zur Wahl der Vertrauensmember Gebrauch machen kannst.\n"
+        "Bitte sende mir eine Liste der @Namen der Personen, die du (in absteigender Reihenfolge) für am geeignetsten für den Job als Vertrauensmember hälst.\n"
+        "Achte bitte darauf, dass alle Namen korrekt geschrieben sind (Das merkst du daran, dass die @Erwähnungen grau hinterlegt werden).\n"
+        "Eine Liste aller Member findest du auch hier: https://forum.flipdot.org/u",
+        title="Dein Stimmzettel", archetype="private_message",
         target_usernames=username)
     return res.get('topic_id')
 

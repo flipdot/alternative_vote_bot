@@ -55,12 +55,12 @@ def distinct(seq) -> list:
 def get_vote(client: DiscourseClient, topic_id) -> list:
     posts = client.topic_posts(topic_id)["post_stream"]["posts"]
     vote_list = None
-    p = re.compile(r'@[A-Za-zäöüÄÖÜß0-9-_]+')
+    pattern = re.compile(r'@[A-Za-zäöüÄÖÜß0-9-_]+')
     for post in posts:
         if post["yours"]:
             continue
         # print(post["cooked"])
-        vote_list_this_post = p.findall(post["cooked"])
+        vote_list_this_post = pattern.findall(post["cooked"])
         # skip if we already got a list and this post is empty
         if len(vote_list_this_post) == 0 and vote_list:
             continue
@@ -73,21 +73,22 @@ def get_vote(client: DiscourseClient, topic_id) -> list:
     return distinct(vote_list)
 
 
-def initiate_election(client: DiscourseClient, users=None):
+def initiate_election(client: DiscourseClient, users):
     if not users:
-        users = client.users()
-        with open("users.json", "w") as f:
-            json.dump(users, f)
+        logging.error(f"Did not get any users :(")
+        sys.exit(-4)
     topics = []
     for user in users:
         if not is_legal_user(user):
             continue
         if user["username"] not in ["anselm"]:
             continue
+        print(f"sending ballot to {user['username']} ...", end="")
         topics.append(send_ballot(client, user["username"]))
-
-    with open("topics.json", "w") as f:
-        json.dump(topics, f)
+        print(" done.")
+        # write after each user
+        with open("topics.json", "w") as f:
+            json.dump(topics, f)
 
 
 def remind_users(client: DiscourseClient, message: str):
@@ -174,7 +175,8 @@ if __name__ == "__main__":
         with open(users_json) as f:
             users = json.load(f)
     else:
-        users = None
+        logging.error(f"Could not find file: {users_json}")
+        sys.exit(-2)
     # initiate_election(client, users=users)
     answer_with_received_lists(client, update=True)
     # remind_users(client, "Eine Erinnerung... voten! jetzt!! ;)")

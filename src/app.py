@@ -13,7 +13,7 @@ from constants import DISCOURSE_CREDENTIALS
 
 locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
 
-botnames = ["flipbot", "flipbot_test", "discobot", "alternative_vote_bot"]
+botnames = ["flipbot", "flipbot_test", "discobot", "alternative_vote_bot", "system", "Mailinglisten-Dummy"]
 
 
 def is_legal_user(user) -> bool:
